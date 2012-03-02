@@ -1,0 +1,10 @@
+diff a/config/routes.rb b/config/routes.rb	(rejected hunks)
+@@ -15,7 +15,7 @@ Hsm::Application.routes.draw do
+   resource :home
+   resources :tools
+   resources :tool_categories
+-  resources :users_skills
++  resources :interests
+   resources :skills
+ 
+   root :to => 'home#index'

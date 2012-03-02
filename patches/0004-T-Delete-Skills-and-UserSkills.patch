@@ -1,0 +1,1441 @@
+From f256f3b06b440ac8faed5484826e2b05da16c08e Mon Sep 17 00:00:00 2001
+From: Ryan Rix <ry@n.rix.si>
+Date: Fri, 2 Mar 2012 01:04:20 -0700
+Subject: [PATCH 4/4] T: Delete Skills and UserSkills
+
+---
+ app/assets/javascripts/interests.js              |    2 +
+ app/assets/stylesheets/interests.css.scss        |    3 +
+ app/assets/stylesheets/skills.css.scss           |    3 -
+ app/assets/stylesheets/users_skills.css.scss     |    3 -
+ app/controllers/interests_controller.rb          |    7 +
+ app/controllers/skills_controller.rb             |   40 --
+ app/controllers/users_skills_controller.rb       |   40 --
+ app/helpers/interests_helper.rb                  |    2 +
+ app/helpers/skills_helper.rb                     |    2 -
+ app/helpers/users_skills_helper.rb               |    2 -
+ app/views/interests/index.html.erb               |   22 +
+ app/views/layouts/application.html.erb           |    6 +-
+ app/views/newsfeed/_spaceupdates.html.erb        |   10 +-
+ app/views/skills/_form.html.erb                  |   20 -
+ app/views/skills/edit.html.erb                   |    7 -
+ app/views/skills/index.html.erb                  |   35 --
+ app/views/skills/new.html.erb                    |    7 -
+ app/views/skills/show.html.erb                   |   23 --
+ app/views/users_skills/_form.html.erb            |   17 -
+ app/views/users_skills/index.html.erb            |   37 --
+ app/views/users_skills/new.html.erb              |    6 -
+ config/routes.rb                                 |    2 +-
+ db/migrate/20111223041824_create_skills.rb       |   11 -
+ db/migrate/20111223042943_create_users_skills.rb |   14 -
+ spec/controllers/interests_controller_spec.rb    |    5 +
+ spec/controllers/newsfeed_controller_spec.rb     |    5 +
+ spec/controllers/users_controller_spec.rb        |    5 +
+ spec/factories.rb                                |    6 +
+ spec/requests/manage_tools_spec.rb               |    6 +-
+ spec/requests/skill_management_spec.rb           |  455 +++++++++++-----------
+ spec/support/fixtures/sample_file.png            |  Bin 0 -> 9712 bytes
+ 31 files changed, 299 insertions(+), 504 deletions(-)
+ create mode 100644 app/assets/javascripts/interests.js
+ create mode 100644 app/assets/stylesheets/interests.css.scss
+ delete mode 100644 app/assets/stylesheets/skills.css.scss
+ delete mode 100644 app/assets/stylesheets/users_skills.css.scss
+ create mode 100644 app/controllers/interests_controller.rb
+ delete mode 100644 app/controllers/skills_controller.rb
+ delete mode 100644 app/controllers/users_skills_controller.rb
+ create mode 100644 app/helpers/interests_helper.rb
+ delete mode 100644 app/helpers/skills_helper.rb
+ delete mode 100644 app/helpers/users_skills_helper.rb
+ create mode 100644 app/views/interests/index.html.erb
+ delete mode 100644 app/views/skills/_form.html.erb
+ delete mode 100644 app/views/skills/edit.html.erb
+ delete mode 100644 app/views/skills/index.html.erb
+ delete mode 100644 app/views/skills/new.html.erb
+ delete mode 100644 app/views/skills/show.html.erb
+ delete mode 100644 app/views/users_skills/_form.html.erb
+ delete mode 100644 app/views/users_skills/index.html.erb
+ delete mode 100644 app/views/users_skills/new.html.erb
+ delete mode 100644 db/migrate/20111223041824_create_skills.rb
+ delete mode 100644 db/migrate/20111223042943_create_users_skills.rb
+ create mode 100644 spec/controllers/interests_controller_spec.rb
+ create mode 100644 spec/controllers/newsfeed_controller_spec.rb
+ create mode 100644 spec/controllers/users_controller_spec.rb
+ create mode 100644 spec/support/fixtures/sample_file.png
+
+diff --git a/app/assets/javascripts/interests.js b/app/assets/javascripts/interests.js
+new file mode 100644
+index 0000000..dee720f
+--- /dev/null
++++ b/app/assets/javascripts/interests.js
+@@ -0,0 +1,2 @@
++// Place all the behaviors and hooks related to the matching controller here.
++// All this logic will automatically be available in application.js.
+diff --git a/app/assets/stylesheets/interests.css.scss b/app/assets/stylesheets/interests.css.scss
+new file mode 100644
+index 0000000..4a8ed05
+--- /dev/null
++++ b/app/assets/stylesheets/interests.css.scss
+@@ -0,0 +1,3 @@
++// Place all the styles related to the interests controller here.
++// They will automatically be included in application.css.
++// You can use Sass (SCSS) here: http://sass-lang.com/
+diff --git a/app/assets/stylesheets/skills.css.scss b/app/assets/stylesheets/skills.css.scss
+deleted file mode 100644
+index b6c781d..0000000
+--- a/app/assets/stylesheets/skills.css.scss
++++ /dev/null
+@@ -1,3 +0,0 @@
+-// Place all the styles related to the skills controller here.
+-// They will automatically be included in application.css.
+-// You can use Sass (SCSS) here: http://sass-lang.com/
+diff --git a/app/assets/stylesheets/users_skills.css.scss b/app/assets/stylesheets/users_skills.css.scss
+deleted file mode 100644
+index cccbb6a..0000000
+--- a/app/assets/stylesheets/users_skills.css.scss
++++ /dev/null
+@@ -1,3 +0,0 @@
+-// Place all the styles related to the users_skills controller here.
+-// They will automatically be included in application.css.
+-// You can use Sass (SCSS) here: http://sass-lang.com/
+diff --git a/app/controllers/interests_controller.rb b/app/controllers/interests_controller.rb
+new file mode 100644
+index 0000000..35d83bc
+--- /dev/null
++++ b/app/controllers/interests_controller.rb
+@@ -0,0 +1,7 @@
++class InterestsController < ApplicationController
++
++  def index
++
++  end
++
++end
+diff --git a/app/controllers/skills_controller.rb b/app/controllers/skills_controller.rb
+deleted file mode 100644
+index 2fed1df..0000000
+--- a/app/controllers/skills_controller.rb
++++ /dev/null
+@@ -1,40 +0,0 @@
+-class SkillsController < ApplicationController
+-  before_filter :authenticate_user!, :except => [:index, :show]
+-  
+-  def index
+-    @skills = Skill.all
+-  end
+-  
+-  def create
+-    @skill = Skill.new(params[:skill])
+-    if @skill.save
+-      flash[:notice] = "Dude, you are awesome. You've added a skill."
+-      redirect_to new_users_skill_path
+-    else
+-      flash[:alert] = 'You broke something. :-('
+-      redirect_to edit_skills_path
+-    end
+-  end
+-  
+-  def new
+-    @skill = Skill.new
+-    @roles = Role.all.collect {|r| [ r.name, r.id ]}
+-    @roles << ["None", ""]
+-  end
+-  
+-  def show
+-    if params[:id] then
+-      @skill = Skill.find(params[:id])
+-      @userskills = @skill.users_skills
+-    else
+-      flash[:alert] = 'No skill selected to show'
+-      redirect_to skills_path
+-    end
+-  end
+-
+-  def edit
+-    @skill = Skill.find( params[:id] )
+-    @roles = Role.all.collect {|r| [ r.name, r.id ]}
+-    @roles << ["None", ""]
+-  end
+-end
+diff --git a/app/controllers/users_skills_controller.rb b/app/controllers/users_skills_controller.rb
+deleted file mode 100644
+index 24b3739..0000000
+--- a/app/controllers/users_skills_controller.rb
++++ /dev/null
+@@ -1,40 +0,0 @@
+-class UsersSkillsController < ApplicationController
+-  
+-  before_filter :authenticate_user!, :except => [:index, :show]
+-  
+-  def index
+-    if params[:id] then
+-      @user = User.find(params[:id])
+-      @uskills = UsersSkill.where(:user_id => @user.id)
+-    else
+-      @uskills = UsersSkill.all
+-    end
+-  end
+-  
+-  def new
+-    @users_skills = UsersSkill.new
+-    @all_skills = Skill.all.collect {|s| [ s.name, s.id ] }
+-    @users = User.all.collect {|s| [s.full_name, s.id] }
+-    @proficiency_levels = [0,1,2,3,4,5]
+-  end   
+-  
+-  def create
+-    user = User.find params[:users_skill][:user_id]
+-    skill = Skill.find params[:users_skill][:skill_id]
+-    proficiency = params[:users_skill][:proficiency]
+-    
+-    if uskill = skill.assign_to( user, current_user, proficiency)
+-      log_action "created", uskill
+-      flash[:notice] = "Great success!"
+-      redirect_to users_skills_path
+-    else
+-      flash[:alert] = "You were not able to save the skill."
+-      redirect_to new_users_skill_path(params[:users_skill])
+-    end
+-  end
+-
+-  def show
+-    @userskill = UsersSkill.find params[:id]
+-    redirect_to skill_path @userskill.skill
+-  end
+-end
+diff --git a/app/helpers/interests_helper.rb b/app/helpers/interests_helper.rb
+new file mode 100644
+index 0000000..593dd3d
+--- /dev/null
++++ b/app/helpers/interests_helper.rb
+@@ -0,0 +1,2 @@
++module InterestsHelper
++end
+diff --git a/app/helpers/skills_helper.rb b/app/helpers/skills_helper.rb
+deleted file mode 100644
+index 5a66444..0000000
+--- a/app/helpers/skills_helper.rb
++++ /dev/null
+@@ -1,2 +0,0 @@
+-module SkillsHelper
+-end
+diff --git a/app/helpers/users_skills_helper.rb b/app/helpers/users_skills_helper.rb
+deleted file mode 100644
+index b0c4ff7..0000000
+--- a/app/helpers/users_skills_helper.rb
++++ /dev/null
+@@ -1,2 +0,0 @@
+-module UsersSkillsHelper
+-end
+diff --git a/app/views/interests/index.html.erb b/app/views/interests/index.html.erb
+new file mode 100644
+index 0000000..dd7cc38
+--- /dev/null
++++ b/app/views/interests/index.html.erb
+@@ -0,0 +1,22 @@
++<div class='hero-unit'>
++  <%= image_tag 'logo.png', class: "pull-right" %>
++  <% if @user_interests %>
++    <h1><%= @user.full_name %>'s Interests</h1>
++  <% else %>
++    <h1>Interests</h1>
++  <% end %>
++
++  <%= link_to "Add an Interest", new_interest_path %>
++
++  <table>
++    <thead>
++      <th>Name</th>
++      <th>Description</th>
++      <th>Interested People</th>
++      <th>Actions</th>
++    </thead>
++    <tbody>
++      
++    </tbody>
++  </table>
++</div>
+diff --git a/app/views/layouts/application.html.erb b/app/views/layouts/application.html.erb
+index 7eec758..3654e8e 100644
+--- a/app/views/layouts/application.html.erb
++++ b/app/views/layouts/application.html.erb
+@@ -47,12 +47,12 @@
+         </ul>
+         <ul class='nav secondary-nav'>
+           <li class='dropdown' data-dropdown='dropdown'>
+-            <%= link_to "Skills", '#', :class => 'dropdown-toggle' %>
++            <%= link_to "Interests", '#', :class => 'dropdown-toggle' %>
+             <ul class='dropdown-menu'>
+               <% if user_signed_in? %>
+-                <li><%= link_to 'My Skills', users_skills_path(id: current_user) %></li>
++                <li><%= link_to 'My Interests', interests_path(id: current_user) %></li>
+               <% end %>
+-              <li><%= link_to 'All Skills', skills_path %></li>
++              <li><%= link_to 'All Interests', interests_path %></li>
+             </ul>
+           </li>
+         </ul>
+diff --git a/app/views/newsfeed/_spaceupdates.html.erb b/app/views/newsfeed/_spaceupdates.html.erb
+index 2886e14..ac33941 100644
+--- a/app/views/newsfeed/_spaceupdates.html.erb
++++ b/app/views/newsfeed/_spaceupdates.html.erb
+@@ -8,15 +8,13 @@
+       <% else %>
+         The space
+       <% end %>
+-       
+-      <%= action.event %>&nbsp;<%= action.obj_type.downcase %>
++
++      <%= action.event %>&nbsp;<%= action.obj_type.humanize.downcase %>
+       <% if action.object %>
+         <%= link_to action.object.name, :action => 'show', :controller => action.obj_type.tableize, :id => action.obj_id%>
+       <% end %>
+-      <% if action.type == 'updated User' %>
+-        's profile.
+-      <% elsif action.type == 'added Tool' %>
+-        &nbsp;to the database.
++      <% if action.type == 'updated User' %>'s profile.
++      <% elsif action.type == 'added Tool' %>&nbsp;to the database.
+       <% end %>
+     </div>
+   <% end %>
+diff --git a/app/views/skills/_form.html.erb b/app/views/skills/_form.html.erb
+deleted file mode 100644
+index 521a35f..0000000
+--- a/app/views/skills/_form.html.erb
++++ /dev/null
+@@ -1,20 +0,0 @@
+-<%= form_for @skill, :html => { :multipart => true } do |s| %>
+-  <p>
+-  <%= s.label "Name: " %>
+-  <%= s.text_field :name %>
+-  </p>
+-  <p>
+-  <%= s.label "Description: " %>
+-  <%= s.text_field :description %>
+-  </p>
+-  <p>
+-  <%= s.label "More Info URL: " %>
+-  <%= s.text_field :more_info_url %>
+-  </p>
+-  <p>
+-  <%= s.label "Role required to grant permission: " %>
+-  <%= s.select :role_required_to_grant, options_for_select(@roles, @roles.last[1]) %>
+-  </p>
+-
+-  <%= s.submit %>
+-<% end %>
+diff --git a/app/views/skills/edit.html.erb b/app/views/skills/edit.html.erb
+deleted file mode 100644
+index 168a037..0000000
+--- a/app/views/skills/edit.html.erb
++++ /dev/null
+@@ -1,7 +0,0 @@
+-<div class="hero-unit">
+-  <%= image_tag 'logo.png', :class => 'pull-right' %>
+-
+-  <h1>Edit Skill</h1>
+-
+-  <%= render 'form' %>
+-</div>
+diff --git a/app/views/skills/index.html.erb b/app/views/skills/index.html.erb
+deleted file mode 100644
+index 1ad0f0e..0000000
+--- a/app/views/skills/index.html.erb
++++ /dev/null
+@@ -1,35 +0,0 @@
+-<div class="hero-unit">
+-  <%= image_tag 'logo.png', :class => 'pull-right' %>
+-
+-  <% if !@user %>
+-    <h1>Skills</h1>
+-  <% else %>
+-    <h1><%= @user.full_name + "'s Skills" %></h1>
+-  <% end %>
+-
+-  <p><%= link_to "Add a skill", :controller => 'skills', :action => 'new' %></p>
+-
+-  <table>
+-    <thead>
+-      <td><%= sort_link "Name", :name %></td>
+-      <td><%= sort_link "Description", :description %></td>
+-      <td><%= sort_link "More Info URL", :more_info_url %></td>
+-      <td><%= sort_link "Knowledgeable Users", :knowledgeable_users %></td>
+-      <td>Actions</td>
+-    </thead>
+-    <tbody>
+-      <% @skills.each do |skill| %>
+-        <tr>
+-          <td><%= skill.name %></td>
+-          <td><%= skill.description %></td>
+-          <td><%= link_to "[link]", skill.more_info_url %></td>
+-          <td><%= link_to UsersSkill.where(:skill_id => skill.id).count, :controller => 'skills', :action => 'show', :id => skill.id %></td>
+-          <td>
+-            <%= link_to 'Show', skill_path(skill),      :class => 'btn' %>
+-            <%= link_to 'Edit', edit_skill_path(skill), :class => 'btn' %>
+-          </td>
+-        </tr>
+-      <% end %>
+-    </tbody>
+-  </table>
+-</div>
+diff --git a/app/views/skills/new.html.erb b/app/views/skills/new.html.erb
+deleted file mode 100644
+index bb74ae8..0000000
+--- a/app/views/skills/new.html.erb
++++ /dev/null
+@@ -1,7 +0,0 @@
+-<div class="hero-unit">
+-  <%= image_tag 'logo.png', :class => 'pull-right' %>
+-
+-  <h1>New Skill</h1>
+-
+-  <%= render 'form' %>
+-</div>
+diff --git a/app/views/skills/show.html.erb b/app/views/skills/show.html.erb
+deleted file mode 100644
+index e32bc1a..0000000
+--- a/app/views/skills/show.html.erb
++++ /dev/null
+@@ -1,23 +0,0 @@
+-<div class="hero-unit">
+-  <%= image_tag 'logo.png', :class => 'pull-right' %>
+-  <h1><%= @skill.name %></h1>
+-
+-  <p>
+-  <%= @skill.description %>
+-  <%= link_to " ... (More info)", @skill.more_info_url %>
+-  </p>
+-
+-  <h3>Knowledgable Users</h3>
+-  <p>
+-  <ul>
+-    <% @userskills.each do |us| %>
+-      <li><%= us.user.full_name + " rates themselves " + us.proficiency.to_s + " out of 5" %></li>
+-    <% end %>
+-  </ul>
+-     <p>
+-      <% @userskills.each do |us| %>
+-        <%= image_tag(us.user.gravatar_url) %></li>
+-      <% end %>
+-    </p> 
+-  </p>
+-</div>
+diff --git a/app/views/users_skills/_form.html.erb b/app/views/users_skills/_form.html.erb
+deleted file mode 100644
+index 66de530..0000000
+--- a/app/views/users_skills/_form.html.erb
++++ /dev/null
+@@ -1,17 +0,0 @@
+-<%= form_for @users_skills, :html => { :multipart => true } do |t| %>
+-  <p>
+-  <%= t.label "Skill: " %>
+-  <%= t.select :skill_id, @all_skills %>
+-  <%= link_to "Add a skill", :controller => 'skills', :action => 'new' %>
+-  </p>
+-  <p>
+-  <%= t.label "Proficiency: " %>
+-  <%= t.select :proficiency, @proficiency_levels %>
+-  </p>
+-  <p>
+-  <%= t.label "User: " %>
+-  <%= t.select :user_id, options_for_select(@users, current_user.id) %>
+-  </p>
+-
+-  <%= t.submit %>
+-<% end %>
+diff --git a/app/views/users_skills/index.html.erb b/app/views/users_skills/index.html.erb
+deleted file mode 100644
+index cc5911b..0000000
+--- a/app/views/users_skills/index.html.erb
++++ /dev/null
+@@ -1,37 +0,0 @@
+-<div class="hero-unit">
+-  <%= image_tag 'logo.png', :class => 'pull-right' %>
+-
+-  <% if !@user %>
+-  <h1>Users Skills</h1>
+-  <% else %>
+-  <h1><%= @user.full_name + "'s Skills" %></h1>
+-  <% end %>
+-
+-  <p><%= link_to "Add a skill to your repertoire", :controller => "users_skills", :action => "new" %>
+-
+-  <table>
+-    <thead>
+-      <td><%= sort_link "Name", :name %></td>
+-      <td><%= sort_link "Proficiency", :proficiency %></td>
+-      <% if !@user %>
+-      <td><%= sort_link "Person", :user_id %></td>
+-      <% end %>
+-    </thead>
+-    <tbody>
+-      <% @uskills.each do |user_skill| %>
+-      <% skill = Skill.find(user_skill.skill_id) %>
+-      <tr>
+-        <td><%= link_to skill.name, skill_path(skill.id) %></td>
+-        <td><%= user_skill.proficiency %></td>
+-        <% if !@user %>
+-          <% if !user_skill.user.nil? %>
+-            <td><%= link_to user_skill.user.full_name, users_skills_path(:id=>user_skill.user.id) %></td>
+-          <% else %>
+-            <td></td>
+-          <% end %>
+-        <% end %>
+-      </tr>
+-      <% end %>
+-    </tbody>
+-  </table>
+-</div>
+diff --git a/app/views/users_skills/new.html.erb b/app/views/users_skills/new.html.erb
+deleted file mode 100644
+index e730683..0000000
+--- a/app/views/users_skills/new.html.erb
++++ /dev/null
+@@ -1,6 +0,0 @@
+-<div class="hero-unit">
+-  <%= image_tag 'logo.png', :class => 'pull-right' %>
+-  <h1>New Skill</h1>
+-
+-  <%= render 'form' %>
+-</div>
+diff --git a/config/routes.rb b/config/routes.rb
+index 0b3357f..2086a81 100644
+--- a/config/routes.rb
++++ b/config/routes.rb
+@@ -15,7 +15,7 @@ Hsm::Application.routes.draw do
+   resource :home
+   resources :tools
+   resources :tool_categories
+-  resources :users_skills
++  resources :interests
+   resources :skills
+ 
+   root :to => 'home#index'
+diff --git a/db/migrate/20111223041824_create_skills.rb b/db/migrate/20111223041824_create_skills.rb
+deleted file mode 100644
+index 02e548d..0000000
+--- a/db/migrate/20111223041824_create_skills.rb
++++ /dev/null
+@@ -1,11 +0,0 @@
+-class CreateSkills < ActiveRecord::Migration
+-  def change
+-    create_table :skills do |t|
+-      t.string "name"
+-      t.string "description"
+-      t.string "more_info_url"
+-
+-      t.timestamps
+-    end
+-  end
+-end
+diff --git a/db/migrate/20111223042943_create_users_skills.rb b/db/migrate/20111223042943_create_users_skills.rb
+deleted file mode 100644
+index d606d76..0000000
+--- a/db/migrate/20111223042943_create_users_skills.rb
++++ /dev/null
+@@ -1,14 +0,0 @@
+-class CreateUsersSkills < ActiveRecord::Migration
+-  def change
+-    create_table :users_skills do |t|
+-      t.integer "user_id"
+-      t.integer "skill_id"
+-      t.integer "proficiency"
+-
+-      t.timestamps
+-    end
+-    
+-    add_index "users_skills", :user_id
+-    add_index "users_skills", :skill_id
+-  end
+-end
+diff --git a/spec/controllers/interests_controller_spec.rb b/spec/controllers/interests_controller_spec.rb
+new file mode 100644
+index 0000000..e31160f
+--- /dev/null
++++ b/spec/controllers/interests_controller_spec.rb
+@@ -0,0 +1,5 @@
++require 'spec_helper'
++
++describe InterestsController do
++
++end
+diff --git a/spec/controllers/newsfeed_controller_spec.rb b/spec/controllers/newsfeed_controller_spec.rb
+new file mode 100644
+index 0000000..55ff8f9
+--- /dev/null
++++ b/spec/controllers/newsfeed_controller_spec.rb
+@@ -0,0 +1,5 @@
++require 'spec_helper'
++
++describe NewsfeedController do
++
++end
+diff --git a/spec/controllers/users_controller_spec.rb b/spec/controllers/users_controller_spec.rb
+new file mode 100644
+index 0000000..142455c
+--- /dev/null
++++ b/spec/controllers/users_controller_spec.rb
+@@ -0,0 +1,5 @@
++require 'spec_helper'
++
++describe UsersController do
++
++end
+diff --git a/spec/factories.rb b/spec/factories.rb
+index 8243db9..ab8ccef 100644
+--- a/spec/factories.rb
++++ b/spec/factories.rb
+@@ -27,4 +27,10 @@ FactoryGirl.define do
+   factory :user_action do
+   end
+ 
++  factory :badge do
++  end
++
++  factory :interest do
++  end
++
+ end
+diff --git a/spec/requests/manage_tools_spec.rb b/spec/requests/manage_tools_spec.rb
+index e60aa7b..c406d7d 100644
+--- a/spec/requests/manage_tools_spec.rb
++++ b/spec/requests/manage_tools_spec.rb
+@@ -62,7 +62,7 @@ describe 'Tool' do
+       it 'should list new tool on the newsfeed' do
+         visit newsfeed_path
+ 
+-        page.should have_content "created tool Test Tool"
++        page.should have_content "added tool Test Tool"
+       end
+     end
+   end
+@@ -143,7 +143,9 @@ describe 'Tool' do
+     it 'should show the changes on the newsfeed' do
+       visit newsfeed_path
+ 
+-      page.should have_content "updated tool Test Changed Tool"
++      # garh, there's newlines in here
++      page.should have_content "updated tool"
++      page.should have_content "Test Changed Tool"
+     end
+ 
+   end
+diff --git a/spec/requests/skill_management_spec.rb b/spec/requests/skill_management_spec.rb
+index 1688c29..df225ad 100644
+--- a/spec/requests/skill_management_spec.rb
++++ b/spec/requests/skill_management_spec.rb
+@@ -1,390 +1,395 @@
+ require 'spec_helper'
+ 
+-before do
++describe 'Skill Management' do
++
++  before do
+     let (:required_permission) { Factory :permission, name:        'Important Permission' }
+     let (:required_role)       { Factory :role,       name:        'Important Role',
+                                                       permissions: [required_permission]  }
+ 
+     let (:admin)               { Factory :user, role: required_role }
+     let (:user)                { Factory :user                      }
+-end
+-
+-describe 'Interests' do
+-
+-  before do
+-    let (:interest)            { Factory :interest,   name:        'Doing Awesome Shit',
+-                                                      description: 'Uhm, awesomeness!',
+-                                                      info_url:    'http://en.wikipedia.org/wiki/Awesome_(window_manager)' }
+   end
+ 
+-  describe 'Adding interests' do
++  describe 'Interests' do
+ 
+     before do
+-      login_as user
++      let (:interest)            { Factory :interest,   name:        'Doing Awesome Shit',
++                                                        description: 'Uhm, awesomeness!',
++                                                        info_url:    'http://en.wikipedia.org/wiki/Awesome_(window_manager)' }
+     end
+ 
+-    it 'should have a link to interests on the home page' do
+-      visit root_path
+-      page.should have_content "My Interests"
+-
+-      click_link "My Interests"
++    describe 'Adding interests' do
+ 
+-      page.should_be_on interests_path( user )
+-    end
+-
+-    it 'should have a link to add new interests from the My Interests page' do
+-      visit interests_path( user )
++      before do
++        login_as user
++      end
+ 
+-      page.should have_content "Add an Interest"
++      it 'should have a link to interests on the home page' do
++        visit root_path
++        page.should have_content "My Interests"
+ 
+-      click_link "Add an Interest"
++        click_link "My Interests"
+ 
+-      page.should_be_on new_interest_path
+-    end
++        page.should_be_on interests_path( user )
++      end
+ 
+-    context 'interest exists' do
++      it 'should have a link to add new interests from the My Interests page' do
++        visit interests_path( user )
+ 
+-      it 'should automatically fill in the other forms when you fill in name', js: true do
+-        visit new_interest_path
++        page.should have_content "Add an Interest"
+ 
+-        fill_in_fields :interest, name: 'Doing Awesome Shit'
++        click_link "Add an Interest"
+ 
+-        page.should have_content 'Uhm, awesomeness'
+-        page.should have_content '(window_manager)'
++        page.should_be_on new_interest_path
+       end
+ 
+-      it 'should allow users to add new interests to their profile', js: true do
+-        visit new_interest_path
+-
+-        fill_in_fields :interest, name: "Doing Awesome Shit"
+-        page.select("5", :from => "interest_proficiency")
++      context 'interest exists' do
+ 
+-        click_link "Add Interest"
++        it 'should automatically fill in the other forms when you fill in name', js: true do
++          visit new_interest_path
+ 
+-        page.should have_content "Awesome! You have added an interest!"
+-      end
++          fill_in_fields :interest, name: 'Doing Awesome Shit'
+ 
+-    end
++          page.should have_content 'Uhm, awesomeness'
++          page.should have_content '(window_manager)'
++        end
+ 
+-    context "interest doesn't exist" do
++        it 'should allow users to add new interests to their profile', js: true do
++          visit new_interest_path
+ 
+-      it 'should validate that all the inputs are filled in', js: true do
+-        visit new_interest_path
++          fill_in_fields :interest, name: "Doing Awesome Shit"
++          page.select("5", :from => "interest_proficiency")
+ 
+-        fill_in_fields :interest, name: "Eating Bacon"
+-        page.select("5", :from => "interest_proficiency")
++          click_link "Add Interest"
+ 
+-        click_link "Add Interest"
++          page.should have_content "Awesome! You have added an interest!"
++        end
+ 
+-        page.should have_content "add some details"
+       end
+ 
+-      it 'should allow users to save new interests', js: true do
+-        visit new_interest_path
++      context "interest doesn't exist" do
+ 
+-        fill_in_fields :interest, name:        'Eating bacon',
+-                                  description: 'om nom nom nom bacons!',
+-                                  info_url:    'http://en.wikipedia.org/wiki/bacon'
+-        page.select("5", :from => "interest_proficiency")
++        it 'should validate that all the inputs are filled in', js: true do
++          visit new_interest_path
+ 
+-        click_link "Add interest"
++          fill_in_fields :interest, name: "Eating Bacon"
++          page.select("5", :from => "interest_proficiency")
+ 
+-        page.should have_content "Awesome! You have added an interest!"
+-      end
++          click_link "Add Interest"
+ 
+-      it 'should not allow duplicate interests to exist', js: true do
+-        visit new_interest_path
++          page.should have_content "add some details"
++        end
+ 
+-        fill_in_fields :interest, name:        'Doing Awesome Shit',
+-                                  description: 'SO HARD',
+-                                  info_url:    'http://en.wikipedia.org/wiki/Awe'
+-        page.select("5", :from => "interest_proficiency")
++        it 'should allow users to save new interests', js: true do
++          visit new_interest_path
+ 
+-        click_link "Add interest"
++          fill_in_fields :interest, name:        'Eating bacon',
++                                    description: 'om nom nom nom bacons!',
++                                    info_url:    'http://en.wikipedia.org/wiki/bacon'
++          page.select("5", :from => "interest_proficiency")
+ 
+-        page.should have_content "Whoa, buddy. There's already an interest with that name. Let's use that one. :)"
+-        click_link "Okay"
++          click_link "Add interest"
+ 
+-        page.should have_content skill.description
+-        page.should have_content skill.info_url
+-      end
++          page.should have_content "Awesome! You have added an interest!"
++        end
+ 
+-    end
++        it 'should not allow duplicate interests to exist', js: true do
++          visit new_interest_path
+ 
+-  end
++          fill_in_fields :interest, name:        'Doing Awesome Shit',
++                                    description: 'SO HARD',
++                                    info_url:    'http://en.wikipedia.org/wiki/Awe'
++          page.select("5", :from => "interest_proficiency")
+ 
+-  describe 'Updating interests' do
++          click_link "Add interest"
+ 
+-    it 'should have a link to edit interests from the interests index' do
+-      pending
+-    end
++          page.should have_content "Whoa, buddy. There's already an interest with that name. Let's use that one. :)"
++          click_link "Okay"
+ 
+-    it 'should allow you to change your proficiency' do
+-      pending
+-    end
++          page.should have_content skill.description
++          page.should have_content skill.info_url
++        end
++
++      end
+ 
+-    it 'should allow you to delete your skill' do
+-      pending
+     end
+ 
+-    context 'can_manage_interests? == true' do
++    describe 'Updating interests' do
+ 
+-      it 'should allow user to change name' do
++      it 'should have a link to edit interests from the interests index' do
+         pending
+       end
+ 
+-      it 'should allow user to change description' do
++      it 'should allow you to change your proficiency' do
+         pending
+       end
+ 
+-      it 'should allow user to change info url' do
++      it 'should allow you to delete your skill' do
+         pending
+       end
+ 
+-      it 'should allow user to delete interest globally' do
+-        pending
+-      end
++      context 'can_manage_interests? == true' do
+ 
+-    end
++        it 'should allow user to change name' do
++          pending
++        end
+ 
+-    context 'can_manage_interests? == false' do
++        it 'should allow user to change description' do
++          pending
++        end
+ 
+-      it 'should not allow user to change name' do
+-        pending
+-      end
++        it 'should allow user to change info url' do
++          pending
++        end
+ 
+-      it 'should not allow user to change description' do
+-        pending
+-      end
++        it 'should allow user to delete interest globally' do
++          pending
++        end
+ 
+-      it 'should not allow user to change info url' do
+-        pending
+       end
+ 
+-      it 'should not allow user to delete interest globally' do
+-        pending
++      context 'can_manage_interests? == false' do
++
++        it 'should not allow user to change name' do
++          pending
++        end
++
++        it 'should not allow user to change description' do
++          pending
++        end
++
++        it 'should not allow user to change info url' do
++          pending
++        end
++
++        it 'should not allow user to delete interest globally' do
++          pending
++        end
++
+       end
+ 
+     end
+ 
+   end
+ 
+-end
++  describe 'Badges' do
+ 
+-describe 'Badges' do
++    let (:teacher_permission) { Factory :permission, name: 'award_major_class_badge'              }
++    let (:teacher_role)       { Factory :role, name: 'teacher', permissions: [teacher_permission] }
++    let (:teacher)            { Factory :user, role: teacher_role                                 }
+ 
+-  let (:teacher_permission) { Factory :permission, name: 'award_major_class_badge'              }
+-  let (:teacher_role)       { Factory :role, name: 'teacher', permissions: [teacher_permission] }
+-  let (:teacher)            { Factory :user, role: teacher_role                                 }
++    let (:class_admin_permission) { Factory :permission, name: 'award_all_badges'                             }
++    let (:class_admin_role)       { Factory :role, name: 'class_admin', permissions: [class_admin_permission] }
++    let (:class_admin)            { Factory :user, role: class_admin_role                                     }
+ 
+-  let (:class_admin_permission) { Factory :permission, name: 'award_all_badges'                             }
+-  let (:class_admin_role)       { Factory :role, name: 'class_admin', permissions: [class_admin_permission] }
+-  let (:class_admin)            { Factory :user, role: class_admin_role                                     }
++    before do
+ 
+-  before do
++      5.times do
++        @badges << Factory( :badge )
++      end
+ 
+-    5.times do
+-      @badges << Factory :badge
+-    end
++      major_class_badge = Factory :badge, name: 'major class'
++      @badges << major_class_badge
+ 
+-    major_class_badge = Factory :badge, name: 'major class'
+-    @badges << major_class_badge
++    end
+ 
+-  end
++    describe 'Awarding badges' do
+ 
+-  describe 'Awarding badges' do
++      context 'as admin ISBAT award all badges' do
+ 
+-    context 'as admin ISBAT award all badges' do
++        before do
++          login_as admin
++        end
+ 
+-      before do
+-        login_as admin
+-      end
++        it 'should have a link in the Skills dropdown to add badges to users' do
++          visit root_path
+ 
+-      it 'should have a link in the Skills dropdown to add badges to users' do
+-        visit root_path
++          click_link "Skills"
++          click_link "Badges"
+ 
+-        click_link "Skills"
+-        click_link "Badges"
++          page.should_be_on dashboard_badges_path
++        end
+ 
+-        page.should_be_on dashboard_badges_path
+-      end
++        it 'should show all of the badges in the dashboard' do
++          visit dashboard_badges_path
+ 
+-      it 'should show all of the badges in the dashboard' do
+-        visit dashboard_badges_path
++          @badges.each do |badge|
++            page.should have_content badge.name
++          end
+ 
+-        @badges.each do |badge|
+-          page.should have_content badge.name
+         end
+ 
+-      end
++        it 'should have links to view each badge' do
++          visit dashboard_badges_path
+ 
+-      it 'should have links to view each badge' do
+-        visit dashboard_badges_path
++          @badges.each do |badge|
++            page.should have_css "a[href='#{ badge_path(badge) }']"
++          end
+ 
+-        @badges.each do |badge|
+-          page.should have_css "a[href='#{ badge_path(badge) }']"
+         end
+ 
+-      end
++        it 'should allow admin to award any badge' do
++          visit badge_path @badges.first
+ 
+-      it 'should allow admin to award any badge' do
+-        visit badge_path @badges.first
++          page.select user.full_name, :from => "award_badge_user"
+ 
+-        page.select user.full_name, :from => "award_badge_user"
++          click_button "Award badge"
+ 
+-        click_button "Award badge"
++          user.badges.should have(1).badge
++        end
+ 
+-        user.badges.should have(1).badge
+-      end
++        it 'should allow admin to remove a badge from a user' do
++          user.badges << @badges.first
+ 
+-      it 'should allow admin to remove a badge from a user' do
+-        user.badges << @badges.first
++          visit badge_path @badges.first
+ 
+-        visit badge_path @badges.first
++          page.select user.full_name, :from => "remove_badge_user"
+ 
+-        page.select user.full_name, :from => "remove_badge_user"
++          click_button "Remove badge"
+ 
+-        click_button "Remove badge"
++          user.badges.should have(0).badges
++        end
+ 
+-        user.badges.should have(0).badges
+       end
+ 
+-    end
++      context 'as class_admin ISBAT award all badges' do
+ 
+-    context 'as class_admin ISBAT award all badges' do
++        before do
++          login_as class_admin
++        end
+ 
+-      before do
+-        login_as class_admin
+-      end
++        it 'should have a link in the Skills dropdown to add badges to users' do
++          visit root_path
+ 
+-      it 'should have a link in the Skills dropdown to add badges to users' do
+-        visit root_path
++          click_link "Skills"
++          click_link "Badges"
+ 
+-        click_link "Skills"
+-        click_link "Badges"
++          page.should_be_on dashboard_badges_path
++        end
+ 
+-        page.should_be_on dashboard_badges_path
+-      end
++        it 'should show all of the badges in the dashboard' do
++          visit dashboard_badges_path
+ 
+-      it 'should show all of the badges in the dashboard' do
+-        visit dashboard_badges_path
++          @badges.each do |badge|
++            page.should have_content badge.name
++          end
+ 
+-        @badges.each do |badge|
+-          page.should have_content badge.name
+         end
+ 
+-      end
++        it 'should have links to view each badge' do
++          visit dashboard_badges_path
+ 
+-      it 'should have links to view each badge' do
+-        visit dashboard_badges_path
++          @badges.each do |badge|
++            page.should have_css "a[href='#{ badge_path(badge) }']"
++          end
+ 
+-        @badges.each do |badge|
+-          page.should have_css "a[href='#{ badge_path(badge) }']"
+         end
+ 
+-      end
++        it 'should allow admin to award any badge' do
++          visit badge_path @badges.first
+ 
+-      it 'should allow admin to award any badge' do
+-        visit badge_path @badges.first
++          page.select user.full_name, :from => "award_badge_user"
+ 
+-        page.select user.full_name, :from => "award_badge_user"
++          click_button "Award badge"
+ 
+-        click_button "Award badge"
++          user.badges.should have(1).badge
++        end
+ 
+-        user.badges.should have(1).badge
+-      end
++        it 'should allow admin to remove a badge from a user' do
++          user.badges << @badges.first
+ 
+-      it 'should allow admin to remove a badge from a user' do
+-        user.badges << @badges.first
++          visit badge_path @badges.first
+ 
+-        visit badge_path @badges.first
++          page.select user.full_name, :from => "remove_badge_user"
+ 
+-        page.select user.full_name, :from => "remove_badge_user"
++          click_button "Remove badge"
+ 
+-        click_button "Remove badge"
++          user.badges.should have(0).badges
++        end
+ 
+-        user.badges.should have(0).badges
+       end
+ 
+-    end
++      context "as teacher ISBAT award my classes' badges" do
+ 
+-    context "as teacher ISBAT award my classes' badges" do
++        before do
++          login_as teacher
++        end
+ 
+-      before do
+-        login_as teacher
+-      end
++        it 'should have a link in the Skills dropdown to add badges to users' do
++          visit root_path
+ 
+-      it 'should have a link in the Skills dropdown to add badges to users' do
+-        visit root_path
++          click_link "Skills"
++          click_link "Badges"
+ 
+-        click_link "Skills"
+-        click_link "Badges"
++          page.should_be_on dashboard_badges_path
++        end
+ 
+-        page.should_be_on dashboard_badges_path
+-      end
++        it 'should show the badges the teacher is allowed to award' do
++          visit dashboard_badges_path
+ 
+-      it 'should show the badges the teacher is allowed to award' do
+-        visit dashboard_badges_path
++          @badges.each do |badge|
++            page.should have_content badge.name
++          end
+ 
+-        @badges.each do |badge|
+-          page.should have_content badge.name
+         end
+ 
+-      end
++        it 'should have links to view each badge' do
++          visit dashboard_badges_path
+ 
+-      it 'should have links to view each badge' do
+-        visit dashboard_badges_path
++          @badges.each do |badge|
++            page.should have_css "a[href='#{ badge_path(badge) }']"
++          end
+ 
+-        @badges.each do |badge|
+-          page.should have_css "a[href='#{ badge_path(badge) }']"
+         end
+ 
+-      end
++        it 'should allow teacher to award his badges' do
++          visit badge_path major_class_badge
+ 
+-      it 'should allow teacher to award his badges' do
+-        visit badge_path major_class_badge
++          page.select user.full_name, :from => "award_badge_user"
+ 
+-        page.select user.full_name, :from => "award_badge_user"
++          click_button "Award badge"
+ 
+-        click_button "Award badge"
++          user.badges.should have(1).badge
++        end
+ 
+-        user.badges.should have(1).badge
+-      end
++        it 'should not allow teacher to award other badges to users' do
++          visit badge_path @badges.first
+ 
+-      it 'should not allow teacher to award other badges to users' do
+-        visit badge_path @badges.first
++          page.should_not have_content "Award badge"
++        end
+ 
+-        page.should_not have_content "Award badge"
+-      end
++        it 'should allow teacher to remove his badges from a user' do
++          user.badges << @badges.first
+ 
+-      it 'should allow teacher to remove his badges from a user' do
+-        user.badges << @badges.first
++          visit badge_path @badges.first
+ 
+-        visit badge_path @badges.first
++          page.select user.full_name, :from => "remove_badge_user"
+ 
+-        page.select user.full_name, :from => "remove_badge_user"
++          click_button "Remove badge"
+ 
+-        click_button "Remove badge"
++          user.badges.should have(0).badges
++        end
+ 
+-        user.badges.should have(0).badges
+-      end
++        it 'should not allow teacher to remove other badges from his users' do
++          # XXX
++          user.badges << @badges.first
+ 
+-      it 'should not allow teacher to remove other badges from his users' do
+-        # XXX
+-        user.badges << @badges.first
++          vists badge_path @badges.first
+ 
+-        vists badge_path @badges.first
++          page.select user.full_name, :from => "remove_badge_user"
+ 
+-        page.select user.full_name, :from => "remove_badge_user"
++          page.should_not have_content "Remove badge"
++        end
+ 
+-        page.should_not have_content "Remove badge"
+       end
+ 
+     end
+ 
+-  end
++    describe 'Checking badge permissions' do
++      pending "This probably isn't an integration test"
++    end
+ 
+-  describe 'Checking badge permissions' do
+   end
+ 
+ end
+diff --git a/spec/support/fixtures/sample_file.png b/spec/support/fixtures/sample_file.png
+new file mode 100644
+index 0000000000000000000000000000000000000000..3883c343bfd74985d5a8a9d51d949fac9fbfe0a4
+GIT binary patch
+literal 9712
+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
+L9n}gItMLB=P1BEU
+
+literal 0
+HcmV?d00001
+
+-- 
+1.7.7.6
+

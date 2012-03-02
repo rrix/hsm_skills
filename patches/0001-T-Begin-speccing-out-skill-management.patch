@@ -1,0 +1,52 @@
+From c0e76cf14535115bfa0279e8e12ff381ed4b78a4 Mon Sep 17 00:00:00 2001
+From: Ryan Rix <ry@n.rix.si>
+Date: Mon, 20 Feb 2012 08:24:04 -0700
+Subject: [PATCH 1/4] T: Begin speccing out skill management
+
+---
+ spec/requests/skill_management_spec.rb |   33 ++++++++++++++++++++++++++++++++
+ 1 files changed, 33 insertions(+), 0 deletions(-)
+ create mode 100644 spec/requests/skill_management_spec.rb
+
+diff --git a/spec/requests/skill_management_spec.rb b/spec/requests/skill_management_spec.rb
+new file mode 100644
+index 0000000..4b808e8
+--- /dev/null
++++ b/spec/requests/skill_management_spec.rb
+@@ -0,0 +1,33 @@
++require 'spec_helper'
++
++describe 'Interests' do
++
++  describe 'Adding interests' do
++
++    it 'should have a link to interests on the home page' do
++      
++    end
++
++    it 'should have a link to add new interests from the My Interests page' do
++      
++    end
++
++  end
++
++  describe 'Updating interests' do
++  end
++
++  describe 'Removing interests' do
++  end
++
++end
++
++describe 'Badges' do
++
++  describe 'Awarding badges' do
++  end
++
++  describe 'Checking badge permissions' do
++  end
++
++end
+-- 
+1.7.7.6
+
