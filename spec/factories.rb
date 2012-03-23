@@ -1,9 +1,9 @@
 FactoryGirl.define do
 
-  factory :skill do
+  factory :badge do
   end
-  
-  factory :users_skill do
+
+  factory :interest do
   end
 
 end
